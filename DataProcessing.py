@@ -2,13 +2,15 @@ import re
 import string
 
 import pandas as pd
+import nltk
+nltk.download('wordnet')
 from keras import Sequential
 from keras.layers import Embedding, LSTM, Dense
 from keras_preprocessing.sequence import pad_sequences
 from keras_preprocessing.text import Tokenizer
 from sklearn.model_selection import train_test_split
-from nltk.stem import PorterStemmer
 from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
 
 def row_to_vec(row):
@@ -65,11 +67,14 @@ def clean_text(text):
 
     # Stemming
     text = text.split()
-    stemmer = PorterStemmer()
-    stemmed_words = [stemmer.stem(word) for word in text]
-    text = " ".join(stemmed_words)
-    # print("Cleaned text:")
-    # print(text)
+    # stemmer = PorterStemmer()
+    # stemmed_words = [stemmer.stem(word) for word in text]
+    # text = " ".join(stemmed_words)
+
+    wordnet_lemmatizer = WordNetLemmatizer()
+    lemmatized_words = [wordnet_lemmatizer.lemmatize(word) for word in text]
+    text = " ".join(lemmatized_words)
+
     return text
 
 

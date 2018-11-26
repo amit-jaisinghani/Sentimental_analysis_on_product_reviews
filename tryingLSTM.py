@@ -1,5 +1,4 @@
 import pandas as pd
-from keras import optimizers
 from nltk.stem import WordNetLemmatizer
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
@@ -11,33 +10,7 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as pyplot
 
 
-
 def clean_text(text):
-    # split into words by white space
-    # words = text.split ()
-    # print('-------Split on White Space-------')
-    # print(words)
-
-    # split based on words only
-    # words = re.split(r'\W+',text)
-    # convert to lower case
-    # words = [ word.lower () for word in words ]
-
-    # print('------Split on only Words-------')
-    # print(words)
-
-    #split by white space and remove punctuation
-    # table = str.maketrans ( '' , '' , string.punctuation )
-    # stripped = [ w.translate ( table ) for w in words ]
-    # print(stripped)
-
-    # sentences = sent_tokenize ( text )
-    # print(sentences)
-
-    # tokens = word_tokenize ( text )
-    # remove all tokens that are not alphabetic
-    # words = [ word for word in tokens if word.isalpha () ]
-    # stop_words = stopwords.words ( 'english' )
 
     # Split into tokens.
     # Convert to lowercase.

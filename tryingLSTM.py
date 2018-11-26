@@ -1,93 +1,79 @@
 import pandas as pd
-import string
-import re
-from nltk.corpus import stopwords
+from keras import optimizers
 from nltk.stem import WordNetLemmatizer
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
 from keras.models import Sequential
 from keras.layers import Embedding, LSTM, Dense, SpatialDropout1D
+from sklearn.metrics import confusion_matrix
+
 import matplotlib.pyplot as pyplot
 
 
 
-
 def clean_text(text):
-    # print("Text:")
-    # print(text)
-    # Remove puncuation
-    # text = text.translate(str.maketrans('', '', string.punctuation))
+    # split into words by white space
+    # words = text.split ()
+    # print('-------Split on White Space-------')
+    # print(words)
 
-    tokens = text.split()
-    # remove punctuation from each token
+    # split based on words only
+    # words = re.split(r'\W+',text)
+    # convert to lower case
+    # words = [ word.lower () for word in words ]
+
+    # print('------Split on only Words-------')
+    # print(words)
+
+    #split by white space and remove punctuation
+    # table = str.maketrans ( '' , '' , string.punctuation )
+    # stripped = [ w.translate ( table ) for w in words ]
+    # print(stripped)
+
+    # sentences = sent_tokenize ( text )
+    # print(sentences)
+
+    # tokens = word_tokenize ( text )
+    # remove all tokens that are not alphabetic
+    # words = [ word for word in tokens if word.isalpha () ]
+    # stop_words = stopwords.words ( 'english' )
+
+    # Split into tokens.
+    # Convert to lowercase.
+    # Remove punctuation from each token.
+    # Filter out remaining tokens that are not alphabetic.
+    # Filter out tokens that are stop words.
+
+    # split into words
+    from nltk.tokenize import word_tokenize
+    tokens = word_tokenize ( text )
+    # convert to lower case
+    tokens = [ w.lower () for w in tokens ]
+    # remove punctuation from each word
+    import string
     table = str.maketrans ( '' , '' , string.punctuation )
-    tokens = [ w.translate ( table ) for w in tokens ]
-    tokens = [ word for word in tokens if word.isalpha () ]
-
-    # Convert words to lower case and split them
-    # text = text.lower().split()
-
-
-    # Remove stop words
-    # stops = set(stopwords.words("english"))
-    # text = [w for w in text if not w in stops and len(w) >= 3]
-
+    stripped = [ w.translate ( table ) for w in tokens ]
+    # remove remaining tokens that are not alphabetic
+    words = [ word for word in stripped if word.isalpha () ]
     # filter out stop words
+    from nltk.corpus import stopwords
     stop_words = set ( stopwords.words ( 'english' ) )
-    tokens = [ w for w in tokens if not w in stop_words ]
-    # filter out short tokens
-    tokens = [ word for word in tokens if len ( word ) > 1 ]
+    words = [ w for w in words if not w in stop_words ]
 
-    text = " ".join(tokens)
-    # Clean the text
-    text = re.sub(r"[^A-Za-z0-9^,!.\/'+-=]", " ", text)
-    text = re.sub(r"what's", "what is ", text)
-    text = re.sub(r"\'s", " ", text)
-    text = re.sub(r"\'ve", " have ", text)
-    text = re.sub(r"n't", " not ", text)
-    text = re.sub(r"i'm", "i am ", text)
-    text = re.sub(r"\'re", " are ", text)
-    text = re.sub(r"\'d", " would ", text)
-    text = re.sub(r"\'ll", " will ", text)
-    text = re.sub(r",", " ", text)
-    text = re.sub(r"\.", " ", text)
-    text = re.sub(r"!", " ! ", text)
-    text = re.sub(r"\/", " ", text)
-    text = re.sub(r"\^", " ^ ", text)
-    text = re.sub(r"\+", " + ", text)
-    text = re.sub(r"\-", " - ", text)
-    text = re.sub(r"\=", " = ", text)
-    text = re.sub(r"'", " ", text)
-    text = re.sub(r"(\d+)(k)", r"\g<1>000", text)
-    text = re.sub(r":", " : ", text)
-    text = re.sub(r" e g ", " eg ", text)
-    text = re.sub(r" b g ", " bg ", text)
-    text = re.sub(r" u s ", " american ", text)
-    text = re.sub(r"\0s", "0", text)
-    text = re.sub(r" 9 11 ", "911", text)
-    text = re.sub(r"e - mail", "email", text)
-    text = re.sub(r"j k", "jk", text)
-    text = re.sub(r"\s{2,}", " ", text)
+    wordnet_lemmatizer = WordNetLemmatizer ()
+    lemmatized_words = [ wordnet_lemmatizer.lemmatize ( word ) for word in words ]
+    new_text = " ".join ( lemmatized_words )
 
-    # Stemming
-    text = text.split()
-    # stemmer = PorterStemmer()
-    # stemmed_words = [stemmer.stem(word) for word in text]
-    # text = " ".join(stemmed_words)
 
-    wordnet_lemmatizer = WordNetLemmatizer()
-    lemmatized_words = [wordnet_lemmatizer.lemmatize(word) for word in text]
-    text = " ".join(lemmatized_words)
-
-    return text
+    return new_text
 
 
 def row_to_vec(row):
     if row['Label'] == 'positive':
-        return 1
-    if row['Label'] == 'negative':
         return 0
+    if row['Label'] == 'negative':
+        return 1
 
 
 def get_data():
@@ -118,7 +104,7 @@ def pre_process_data(data):
 def train_model(x , y, tk):
     X_train , X_test , y_train , y_test = train_test_split ( x , y , test_size=0.25 , random_state=1 )
 
-    batch_size = 4
+    batch_size = 64
     X_train1 = X_train[ batch_size: ]
     y_train1 = y_train[ batch_size: ]
     X_valid = X_train[ :batch_size ]
@@ -133,7 +119,7 @@ def train_model(x , y, tk):
     model.add ( LSTM ( 200, dropout=0.2, recurrent_dropout=0.2 ) )
     model.add ( Dense ( 1 , activation='sigmoid' ) )
     model.compile ( loss='binary_crossentropy' , optimizer='adam' , metrics=[ 'accuracy' ] )
-    history = model.fit(X_train1, y_train1, validation_data= (X_valid, y_valid), batch_size= batch_size, epochs=15)
+    history = model.fit(X_train1, y_train1, validation_data= (X_valid, y_valid), batch_size= batch_size, epochs=7)
 
     pyplot.plot ( history.history[ 'loss' ] )
     pyplot.plot ( history.history[ 'val_loss' ] )
@@ -145,6 +131,10 @@ def train_model(x , y, tk):
 
     scores = model.evaluate(X_test, y_test, verbose=0)
     print('Test accuracy = ', scores[1])
+    y_pred = model.predict ( X_test )
+    y_pred = (y_pred > 0.5)
+    cm = confusion_matrix ( y_test , y_pred )
+    print(cm)
     pass
 
 

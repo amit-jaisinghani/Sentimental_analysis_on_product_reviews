@@ -106,6 +106,7 @@ def train_model(x , y, tk):
     print('Test accuracy = ', scores[1])
     y_pred = model.predict ( X_test )
     y_pred = (y_pred > 0.5)
+    print('Confusion Matrix:')
     cm = confusion_matrix ( y_test , y_pred )
     print(cm)
     pass
